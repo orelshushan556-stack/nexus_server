@@ -1,0 +1,19 @@
+# Build directories
+build/
+cmake-build-*/
+bin/
+out/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.user
+
+# Compiled binaries & objects
+*.o
+*.a
+*.so
+*.dylib
+nexus_server
+test_server_basic
