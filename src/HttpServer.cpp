@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "Router.hpp"
 
 HttpServer::HttpServer(uint16_t port)
     : port_(port), server_fd_(-1), is_running_(false) {
@@ -70,17 +71,16 @@ void HttpServer::handle_client(int client_fd) {
     }
     buffer[bytes_read] = '\0';
 
-    std::string request = buffer;
-    HttpRequest req = HttpRequestParser::parse(request);
-    HttpResponse res;
-    res.set_header("Content-Type", "text/plain");
-    res.set_body(req.path);
+    std::string raw_request = buffer;
+    HttpRequest req = HttpRequestParser::parse(raw_request);
+
+    Router router;
+    HttpResponse res = router.route(req);
 
     std::string response_str = res.to_string();
     write(client_fd, response_str.c_str(), response_str.size());
 
     close(client_fd);
-
 }
 
 void HttpServer::stop() {
