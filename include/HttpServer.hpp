@@ -31,5 +31,5 @@ private:
 
     // Internal helper functions
     void setup_socket();          // Initializes, binds, and configures the listening socket
-    void handle_client(int client_fd); // Reads client request and sends back a response
+    static void handle_client(int client_fd); // Reads client request and sends back a response
 };

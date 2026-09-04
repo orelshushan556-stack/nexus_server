@@ -20,6 +20,8 @@ add_executable(nexus_server
         include/HttpRequestParser.hpp
         include/HttpResponse.hpp
         include/Router.hpp
+        include/WorkerThreadPool.hpp
+        src/WorkerThreadPool.cpp
 )
 target_link_libraries(nexus_server PRIVATE Threads::Threads)
 
