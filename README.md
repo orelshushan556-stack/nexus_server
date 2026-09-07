@@ -2,6 +2,11 @@
 
 A lightweight, high-performance HTTP/1.1 web server built from scratch in **C++20** with zero external dependencies. The architecture leverages POSIX Sockets for networking, a fully integrated multi-threaded `WorkerThreadPool` for concurrent execution, and a hardened static file serving engine.
 
+## Demo / Preview 🎬
+Here is a live demonstration of the frontend (MNIST application) running smoothly on the custom C++20 server backend:
+
+<video src="assets/demo.mp4" controls width="100%"></video>
+
 ## Project Status: Production Ready ✅
 * **Core Network Engine**: `HttpServer` utilizing POSIX Sockets, `SO_REUSEADDR` optimization, and cross-platform socket handling (`_WIN32`/POSIX).
 * **Concurrency Engine**: Multi-threaded `WorkerThreadPool` protecting the task queue via `std::mutex`, `std::condition_variable`, and RAII locking with safe graceful shutdown.
