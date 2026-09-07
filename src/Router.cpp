@@ -5,12 +5,12 @@ HttpResponse Router::route(const HttpRequest& req) const {
         return handle_api_status();
     }
 
+    std::string path_to_serve = (req.path == "/") ? "/index.html" : req.path;
 
-    auto static_res = file_handler_.serve(req.path);
+    auto static_res = file_handler_.serve(path_to_serve);
     if (static_res.has_value()) {
         return std::move(*static_res);
     }
-
 
     return handle_not_found();
 }

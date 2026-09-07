@@ -13,24 +13,35 @@ std::optional<HttpResponse> StaticFileHandler::serve(std::string_view raw_path) 
         rel_path.erase(0, 1);
     }
 
-    std::filesystem::path target = std::filesystem::weakly_canonical(public_root_ / rel_path);
+    std::filesystem::path input_path(rel_path);
+    if (input_path.is_absolute() || input_path.has_root_name()) {
+        return std::nullopt;
+    }
+
+    std::filesystem::path target = std::filesystem::weakly_canonical(public_root_ / input_path);
 
     if (!is_safe_path(target) || !std::filesystem::is_regular_file(target)) {
         return std::nullopt;
     }
 
-    std::ifstream file(target, std::ios::binary);
+    std::ifstream file(target, std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         return std::nullopt;
     }
 
-    std::string content((std::istreambuf_iterator<char>(file)),
-                         std::istreambuf_iterator<char>());
+    std::streamsize size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::string content;
+    content.resize(size);
+    if (!file.read(content.data(), size)) {
+        return std::nullopt;
+    }
 
     HttpResponse res;
     res.set_status(200, "OK");
     res.set_header("Content-Type", std::string(get_mime_type(target)));
-    res.set_header("Content-Length", std::to_string(content.size()));
+    res.set_header("Content-Length", std::to_string(size));
     res.set_body(std::move(content));
 
     return res;
@@ -53,12 +64,15 @@ std::string_view StaticFileHandler::get_mime_type(const std::filesystem::path& f
         return it->second;
     }
     return "application/octet-stream";
-
 }
 
 bool StaticFileHandler::is_safe_path(const std::filesystem::path& resolved_path) const {
-    const auto target = resolved_path.string();
-    const auto base = public_root_.string();
+    std::error_code ec;
+    auto rel = std::filesystem::relative(resolved_path, public_root_, ec);
+    if (ec || rel.empty()) {
+        return false;
+    }
 
-    return target.starts_with(base);
+    auto it = rel.begin();
+    return it != rel.end() && *it != "..";
 }

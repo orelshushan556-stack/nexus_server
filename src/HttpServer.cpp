@@ -9,8 +9,8 @@
 #include <arpa/inet.h>
 #include "Router.hpp"
 
-HttpServer::HttpServer(uint16_t port)
-    : port_(port), server_fd_(-1), is_running_(false) {
+HttpServer::HttpServer(uint16_t port, size_t num_threads)
+    : port_(port), server_fd_(-1), is_running_(false), thread_pool_(num_threads) {
 }
 
 HttpServer::~HttpServer() {
@@ -54,19 +54,27 @@ void HttpServer::start() {
         socklen_t client_len = sizeof(client_addr);
         int client_fd = accept(server_fd_, reinterpret_cast<sockaddr*>(&client_addr), &client_len);
         if (client_fd < 0) {
+            if (!is_running_) break;
             std::cout << "Error accepting connection" << std::endl;
             continue;
         }
-        handle_client(client_fd);
+
+        thread_pool_.enqueue([client_fd]() {
+            handle_client(client_fd);
+        });
     }
 }
 
 void HttpServer::handle_client(int client_fd) {
     char buffer[4096] = {0};
-    ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
+    int bytes_read = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes_read <= 0) {
         std::cout << "Error reading from socket" << std::endl;
+#ifdef _WIN32
+        closesocket(client_fd);
+#else
         close(client_fd);
+#endif
         return;
     }
     buffer[bytes_read] = '\0';
@@ -78,9 +86,13 @@ void HttpServer::handle_client(int client_fd) {
     HttpResponse res = router.route(req);
 
     std::string response_str = res.to_string();
-    write(client_fd, response_str.c_str(), response_str.size());
+    send(client_fd, response_str.c_str(), static_cast<int>(response_str.size()), 0);
 
+#ifdef _WIN32
+    closesocket(client_fd);
+#else
     close(client_fd);
+#endif
 }
 
 void HttpServer::stop() {
