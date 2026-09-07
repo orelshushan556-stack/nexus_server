@@ -5,7 +5,7 @@ A lightweight, high-performance HTTP/1.1 web server built from scratch in **C++2
 ## Demo / Preview 🎬
 Here is a live demonstration of the frontend (MNIST application) running smoothly on the custom C++20 server backend:
 
-![Nexus Server Demo](assets/demo.gif)
+![Nexus Server Demo](assets/test1.gif)
 
 ## Project Status: Production Ready ✅
 * **Core Network Engine**: `HttpServer` utilizing POSIX Sockets, `SO_REUSEADDR` optimization, and cross-platform socket handling (`_WIN32`/POSIX).
