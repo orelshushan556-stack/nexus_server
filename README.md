@@ -1,35 +1,46 @@
-# Nexus Server 🚀
+﻿# Nexus Server 🚀
 
-A lightweight, zero-dependency HTTP/1.1 web server written from scratch in modern **C++20** using POSIX sockets[cite: 1].
+A lightweight, high-performance HTTP/1.1 web server built from scratch in **C++20** with zero external dependencies[cite: 1]. The architecture leverages POSIX Sockets for networking and a custom Thread Pool for concurrent execution[cite: 1]. It is designed as a robust backend capable of serving static assets (including WebAssembly and Frontend builds) and handling high traffic loads[cite: 1].
 
-## Architecture & Key Features
-- **Zero External Dependencies**: Pure C++ standard library & POSIX networking APIs[cite: 1].
-- **Core HTTP Server Engine (`HttpServer`)**: Encapsulates socket lifecycle, non-blocking connection dispatch, and request routing integration[cite: 1].
-- **Worker Thread Pool (`WorkerThreadPool`)**: High-performance multi-threaded task processing backed by a thread-safe queue, `std::mutex`, and `std::condition_variable` with zero CPU spin-waiting[cite: 1].
-- **Graceful Shutdown**: Coordinated teardown via RAII and thread joining to eliminate resource leaks and race conditions[cite: 1].
-- **Strict HTTP/1.1 Compliance**: Complete request parsing (`HttpRequestParser`) and structured response serialization (`HttpResponse`)[cite: 1].
-- **Declarative Path Routing (`Router`)**: Clean path-to-handler dispatching supporting modular endpoints (`/`, `/api/status`) and standard HTTP status handling (200 OK, 404 Not Found)[cite: 1].
-- **Automated Testing Suite**: Dedicated unit and integration tests covering core server flows (`test_server_basic`)[cite: 1].
-- **Modern C++ Design**: Built with C++20 idioms, strict compiler flags (`-Wall -Wextra -Wpedantic`), and CMake build automation[cite: 1].
+## Current Project Status
+The server is currently at **75%-80% completion**[cite: 1]:
+* **Completed**: Core network engine (`HttpServer`), HTTP parsing/serialization (`HttpRequestParser` & `HttpResponse`), declarative routing (`Router`), and the multi-threaded `WorkerThreadPool`[cite: 1].
+* **In Progress (Final 10%)**: Static file serving (`StaticFileHandler`) and implementing Path Traversal security[cite: 1].
+* **Next Steps (Final 10-15%)**: Load benchmarking (e.g., using `wrk`) and finalizing documentation[cite: 1].
 
-## Concurrency Model
-The server employs a worker thread pool model to decouple client connection handling from CPU execution[cite: 1]:
-* **Task Ingestion (`enqueue`)**: Client requests are wrapped as `std::function<void()>` and enqueued into a synchronized FIFO task queue[cite: 1].
-* **Greedy Worker Loop (`worker_loop`)**: Worker threads sleep on an `std::condition_variable` when idle and wake on demand to pull tasks with automatic load distribution across available CPU cores[cite: 1].
-* **Safe Teardown (`~WorkerThreadPool`)**: Broadcasting termination flags, signaling all active threads, and executing `join()` ensures all in-flight tasks finish before destruction[cite: 1].
+## Theoretical Concepts & Architecture
 
-## Roadmap
-- [x] Socket setup & non-blocking connection handling (`HttpServer`)[cite: 1]
-- [x] `HttpRequestParser` & `HttpResponse` serialization[cite: 1]
-- [x] Declarative path routing & HTTP status codes (`Router`)[cite: 1]
-- [x] Custom Thread Pool for concurrent client connections (`WorkerThreadPool`)[cite: 1]
-- [x] Automated test suite (`test_server_basic`)[cite: 1]
-- [ ] Static asset serving (HTML/CSS/MIME types)[cite: 1]
-- [ ] Benchmarking & performance profiling[cite: 1]
+### 1. Networking & POSIX Sockets
+* **File Descriptors (fd)**: Treats network connections as standard I/O channels allowing standard read/write operations[cite: 2].
+* **TCP Server Lifecycle**: Executes `socket()`, uses `setsockopt` with `SO_REUSEADDR` to bypass `TIME_WAIT`, binds the port (`bind()`), queues connections (`listen()`), and accepts clients (`accept()`)[cite: 2].
+* **Data Flow**: Extracts raw bytes from the network into a buffer, processes the stream, and writes the response back[cite: 2].
 
-## Build & Run
+### 2. HTTP/1.1 Protocol Under the Hood
+* **Protocol Design**: Operates as a stateless, text-based Request-Response system[cite: 2].
+* **Formatting rules**: Utilizes CRLF (`\r\n`) for line endings and a double CRLF (`\r\n\r\n`) to separate headers from the body payload[cite: 2].
+* **Serialization/Deserialization**: Converts raw byte streams into logical C++ objects (`HttpRequestParser`) and serializes C++ objects back to compliant text (`HttpResponse`)[cite: 2].
+* **Content Management**: Relies on `Content-Type` for MIME mapping and `Content-Length` for precise payload sizing[cite: 2].
+
+### 3. Concurrency & Multithreading
+* **Thread Pool Model**: Pre-allocates a fixed number of workers to prevent the overhead and resource exhaustion of a Thread-per-Client approach[cite: 2].
+* **Synchronization Primitives**: Secures shared data via `std::mutex` and mitigates busy-waiting CPU cycles using `std::condition_variable` (`wait()`, `notify_one()`, `notify_all()`)[cite: 2].
+* **RAII Locks**: Guarantees safe lock release during stack unwinding via `std::unique_lock`[cite: 2].
+* **Graceful Shutdown**: Safely signals a termination flag, wakes sleeping threads, and halts execution via `join()` to prevent resource leaks[cite: 2].
+
+### 4. Software Engineering & Security
+* **Single Responsibility Principle (SRP)**: Strictly separates network lifecycle (`HttpServer`), data parsing (`HttpRequestParser`), data modeling (`HttpResponse`), and logic dispatching (`Router`)[cite: 2].
+* **Path Traversal Mitigation**: Secures file serving by canonicalizing requested paths and verifying they strictly reside within the designated `public/` directory[cite: 2].
+
+## How to Build & Run
 ```bash
+# 1. Build project
 mkdir -p build && cd build
 cmake ..
 cmake --build .
+
+# 2. Run the Web Server
 ./nexus_server
+
+# 3. Run Test Suites
+./test_server_basic
+./test_static_files
