@@ -16,12 +16,14 @@ add_executable(nexus_server
         src/HttpRequestParser.cpp
         src/HttpResponse.cpp
         src/Router.cpp
+        src/WorkerThreadPool.cpp
+        src/StaticFileHandler.cpp
         include/HttpServer.hpp
         include/HttpRequestParser.hpp
         include/HttpResponse.hpp
         include/Router.hpp
         include/WorkerThreadPool.hpp
-        src/WorkerThreadPool.cpp
+        include/StaticFileHandler.hpp
 )
 target_link_libraries(nexus_server PRIVATE Threads::Threads)
 
@@ -31,9 +33,24 @@ add_executable(test_server_basic
         src/HttpRequestParser.cpp
         src/HttpResponse.cpp
         src/Router.cpp
+        src/StaticFileHandler.cpp
         include/HttpServer.hpp
         include/HttpRequestParser.hpp
         include/HttpResponse.hpp
         include/Router.hpp
+        include/StaticFileHandler.hpp
 )
 target_link_libraries(test_server_basic PRIVATE Threads::Threads)
+
+add_executable(test_static_files
+        tests/test_static_files.cpp
+        src/HttpRequestParser.cpp
+        src/HttpResponse.cpp
+        src/Router.cpp
+        src/StaticFileHandler.cpp
+        include/HttpRequestParser.hpp
+        include/HttpResponse.hpp
+        include/Router.hpp
+        include/StaticFileHandler.hpp
+)
+target_link_libraries(test_static_files PRIVATE Threads::Threads)

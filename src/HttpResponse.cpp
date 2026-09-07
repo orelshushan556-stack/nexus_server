@@ -52,3 +52,7 @@ std::string HttpResponse::to_string() const {
 
     return response;
 }
+
+void HttpResponse::set_body(std::string&& body) {
+    body_ = std::move(body);
+}

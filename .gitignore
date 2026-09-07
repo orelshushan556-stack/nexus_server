@@ -17,3 +17,4 @@ out/
 *.dylib
 nexus_server
 test_server_basic
+public/

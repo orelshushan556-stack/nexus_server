@@ -1,13 +1,18 @@
 #include "Router.hpp"
 
 HttpResponse Router::route(const HttpRequest& req) const {
-    if (req.path == "/") {
-        return handle_home();
-    } else if (req.path == "/api/status") {
+    if (req.path == "/api/status") {
         return handle_api_status();
-    } else {
-        return handle_not_found();
     }
+
+
+    auto static_res = file_handler_.serve(req.path);
+    if (static_res.has_value()) {
+        return std::move(*static_res);
+    }
+
+
+    return handle_not_found();
 }
 
 HttpResponse Router::handle_home() {
